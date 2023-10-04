@@ -1,16 +1,27 @@
 import subprocess
+import re
+from Hash import *
 
-# Your shell command
-command = "echo 'navin'"
+def get_fcmd(command):
+    l = list(command.split())
+    return l[0]
 # Run the command and capture the output
-result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+def run_cmd(command):
 
-# Check if the command was successful (return code 0)
-if result.returncode == 0:
-    # Access the standard output of the command
-    output = result.stdout
-    print("Command output:\n", output)
-else:
-    # Access the standard error if the command failed
-    error = result.stderr
-    print("Command failed with error:\n", error)
+    func,bool = hash_database.get(get_fcmd(command))
+    
+    if bool: 
+        return func(command)
+    else:
+        result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        # Check if the command was successful (return code 0)
+        if result.returncode == 0:
+            output = result.stdout
+            return output
+        else:
+            error = result.stderr
+            return error
+    
+def clean_cmd(command):
+    x = re.findall("\$.+", command)
+    return x[0][1:].strip()
