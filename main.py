@@ -1,9 +1,15 @@
 import customtkinter
 import tkinter as tk
-
+from back import *
+import keyboard
+from data_structures import CQueue
 
 customtkinter.set_appearance_mode("dark")
 customtkinter.set_default_color_theme("blue")
+
+#disabling enter key
+key="enter" 
+keyboard.block_key(key)
 
 class App(customtkinter.CTk):
     def __init__(self):
@@ -13,11 +19,13 @@ class App(customtkinter.CTk):
         self.geometry("780x480")
         self.title("Terminal")
         self.resizable(width=False,height=False)
+        
 
         #fonts
         self.menu_font = ("Robot 9000", 15, 'bold')
         self.text_font = ("NEOTERIC", 20, 'bold')
         self.history_text = []
+        self.queue = CQueue(5)
 
         #create tabs
         self.tabs = customtkinter.CTkTabview(self)
@@ -39,7 +47,10 @@ class App(customtkinter.CTk):
         #create a textbox for the command
         self.command = customtkinter.CTkTextbox(self.tabs.tab("Terminal"), height=40,font = self.text_font)
         self.command.pack(fill = "both",padx = 10,pady = 5)
-        self.command.insert("0.0","PS C:User\Lenovo$>- ")
+        self.command.insert("0.0","C:User->Lenovo>$ ")
+        self.command.configure(wrap=None)
+        self.command.bind('<Shift_R>',command = self.up_cycle)
+        
 
         #create the run button
         self.button = customtkinter.CTkButton(self.tabs.tab("Terminal"),text = "Run",command = self.bt_func)
@@ -58,7 +69,7 @@ class App(customtkinter.CTk):
         self.historybox.configure(state = "disabled")
 
     #create a function for run button
-    def bt_func(self):
+    def bt_func(self,event = None):
 
         #enable these textboxes
         self.historybox.configure(state = "normal")
@@ -70,11 +81,19 @@ class App(customtkinter.CTk):
 
         #gets the command calculate the output and print it 
         tex = self.command.get("0.0","end")
-        self.outbox.insert("0.0","executing a random command")
+        clean = clean_cmd(tex)
+        out = run_cmd(clean)
+        self.outbox.insert("0.0",text = out)
+
+        #updates queue
+        bool = self.queue.enqueue(tex[:-1])
+        if bool == False:
+            temp = self.queue.dequeue()
+            bool_temp = self.queue.enqueue(tex[:-1])
 
         #updates the command line
         self.command.delete("0.0","end")
-        self.command.insert("0.0","PS C:User\Lenovo$>- ")
+        self.command.insert("0.0","C:User->Lenovo>$ ")
 
         #updates the history 
         self.history_text.append(tex)
@@ -84,6 +103,17 @@ class App(customtkinter.CTk):
         #disable these textboxes 
         self.historybox.configure(state = "disabled")
         self.outbox.configure(state = "disabled")
+
+    def up_cycle(self,event = None):
+
+        #getting the current command and storing it
+        tex = self.command.get("0.0","end")
+        self.command.delete("0.0","end")
+
+        #dequeing the command in queue and enqueue the current command
+        next_cmd = self.queue.dequeue()
+        self.queue.enqueue(tex[:-1])
+        self.command.insert("0.0",text = next_cmd)
 
 def main():
     app = App()
