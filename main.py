@@ -3,13 +3,16 @@ import tkinter as tk
 from back import *
 import keyboard
 from data_structures import CQueue
+import os
 
 customtkinter.set_appearance_mode("dark")
 customtkinter.set_default_color_theme("blue")
 
 #disabling enter key
-key="enter" 
-keyboard.block_key(key)
+#key="enter" 
+#keyboard.block_key(key)
+
+os.chdir("C:\\Users")
 
 class App(customtkinter.CTk):
     def __init__(self):
@@ -23,7 +26,7 @@ class App(customtkinter.CTk):
 
         #fonts
         self.menu_font = ("Robot 9000", 15, 'bold')
-        self.text_font = ("NEOTERIC", 20, 'bold')
+        self.text_font = ("Libel Suit Rg", 18, 'bold')
         self.history_text = []
         self.queue = CQueue(5)
 
@@ -45,22 +48,37 @@ class App(customtkinter.CTk):
         self.cmd_title.configure(state = "disabled")
 
         #create a textbox for the command
-        self.command = customtkinter.CTkTextbox(self.tabs.tab("Terminal"), height=40,font = self.text_font)
+        self.command = customtkinter.CTkTextbox(self.tabs.tab("Terminal"), height=40, font = self.text_font, activate_scrollbars= False)
         self.command.pack(fill = "both",padx = 10,pady = 5)
-        self.command.insert("0.0","C:User->Lenovo>$ ")
+        self.command.insert("0.0",text = get_shrt_dir(os.getcwd()) + ">$ ")
         self.command.configure(wrap=None)
-        self.command.bind('<Shift_R>',command = self.up_cycle)
+        self.command.bind('<Shift_R>',command = self.shift_cycle)
+        self.command.bind('<Return>',command = self.Enter_func)
         
 
         #create the run button
         self.button = customtkinter.CTkButton(self.tabs.tab("Terminal"),text = "Run",command = self.bt_func)
-        self.button.place(relx = 0.5,rely = 0.26,anchor = tk.CENTER)
+        self.button.place(relx = 0.5,rely = 0.25,anchor = tk.CENTER)
         self.button.configure(font=self.menu_font)
 
         #create the output textbox
         self.outbox = customtkinter.CTkTextbox(self.tabs.tab("Terminal"), height=600,font = self.text_font)
         self.outbox.pack(fill = "both",padx = 10,pady = 45)
         self.outbox.configure(state = "disabled")
+
+        #creating button for changing system mode
+        self.switch_var_1 = customtkinter.StringVar(value = "on")
+        self.switch_1 = customtkinter.CTkSwitch(master = self.tabs.tab("Terminal"), text = "App Mode",command = self.switch_appmode
+                                                ,variable = self.switch_var_1, onvalue = "on", offvalue = "off",border_color= "transparent")
+        self.switch_1.place(relx = 0.7,rely = 0.954,anchor = tk.CENTER)
+        self.switch_1.configure(font=self.menu_font)
+
+        #creating button for directory mode
+        self.switch_var_2 = customtkinter.StringVar(value = "on")
+        self.switch_2 = customtkinter.CTkSwitch(master = self.tabs.tab("Terminal"), text = "Directory Mode",command = self.switch_dirmode
+                                                ,variable = self.switch_var_2, onvalue = "on", offvalue = "off",border_color= "transparent")
+        self.switch_2.place(relx = 0.25,rely = 0.954,anchor = tk.CENTER)
+        self.switch_2.configure(font=self.menu_font)
 
         #create the stuff in History tab
         #create the history textbox
@@ -86,14 +104,18 @@ class App(customtkinter.CTk):
         self.outbox.insert("0.0",text = out)
 
         #updates queue
-        bool = self.queue.enqueue(tex[:-1])
+        bool = self.queue.enqueue(clean_cmd(tex[:]))
         if bool == False:
             temp = self.queue.dequeue()
-            bool_temp = self.queue.enqueue(tex[:-1])
+            bool_temp = self.queue.enqueue(clean_cmd(tex[:]))
 
         #updates the command line
+        #checks the directory mode and choses the directory 
+        if self.switch_var_2.get() == "on": tmp_dir = get_shrt_dir(os.getcwd())
+        else: tmp_dir = os.getcwd()
         self.command.delete("0.0","end")
-        self.command.insert("0.0","C:User->Lenovo>$ ")
+        self.command.insert("0.0",text = tmp_dir + ">$ ")
+            
 
         #updates the history 
         self.history_text.append(tex)
@@ -104,16 +126,46 @@ class App(customtkinter.CTk):
         self.historybox.configure(state = "disabled")
         self.outbox.configure(state = "disabled")
 
-    def up_cycle(self,event = None):
+    #implements the circular queue with shift key
+    def shift_cycle(self,event = None):
 
         #getting the current command and storing it
-        tex = self.command.get("0.0","end")
+        tex = clean_cmd(self.command.get("0.0","end"))
         self.command.delete("0.0","end")
 
         #dequeing the command in queue and enqueue the current command
         next_cmd = self.queue.dequeue()
-        self.queue.enqueue(tex[:-1])
-        self.command.insert("0.0",text = next_cmd)
+        self.queue.enqueue(tex[:])
+        self.command.insert("0.0",text = os.getcwd() + ">$ " + next_cmd)
+    
+    #binds the run button function to enter and disables new line
+    def Enter_func(self,event = None):
+        self.bt_func()
+        return "break"
+    
+    #creates the switch function for app mode switch
+    def switch_appmode(self,event = None):
+
+        #if the switch mode is on then its dark mode if its off its light mode
+        if self.switch_var_1.get() == "on":
+            customtkinter.set_appearance_mode("dark")      
+        else:
+            customtkinter.set_appearance_mode("light")
+
+    #creates the switch function for changing the directory mode
+    def switch_dirmode(self,event = None):
+
+        #if the switch is on then get the command and show shorthen the directory
+        if self.switch_var_2.get() == "on":
+            cln_command = clean_cmd(self.command.get("0.0","end"))
+            self.command.delete("0.0","end")
+            self.command.insert("0.0",text = get_shrt_dir(os.getcwd()) + ">$ " + cln_command)
+
+        #if the switch is off then get the command and show the full directory
+        else:
+            cln_command = clean_cmd(self.command.get("0.0","end"))
+            self.command.delete("0.0","end")
+            self.command.insert("0.0",text = os.getcwd() + ">$ " + cln_command)
 
 def main():
     app = App()
