@@ -136,7 +136,9 @@ class App(customtkinter.CTk):
         #dequeing the command in queue and enqueue the current command
         next_cmd = self.queue.dequeue()
         self.queue.enqueue(tex[:])
-        self.command.insert("0.0",text = os.getcwd() + ">$ " + next_cmd)
+        if self.switch_var_2.get() == "on": tmp_dir = get_shrt_dir(os.getcwd())
+        else: tmp_dir = os.getcwd()
+        self.command.insert("0.0",text = tmp_dir + ">$ " + next_cmd)
     
     #binds the run button function to enter and disables new line
     def Enter_func(self,event = None):
