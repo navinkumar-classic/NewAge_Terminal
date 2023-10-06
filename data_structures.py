@@ -86,3 +86,4 @@ class CQueue():
             temp = self.queue[self.head]
             self.head = (self.head + 1) % self.k
             return temp
+        
