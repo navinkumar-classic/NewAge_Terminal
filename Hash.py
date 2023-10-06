@@ -38,11 +38,14 @@ def alias(command):
         return string
     
     else:
-        alias_arr.append(sub_cmd[1])
-        alias_hash.set(sub_cmd[1],' '.join(sub_cmd[2:]))
-
-        return "Alias set"
-        
+        try:
+            alias_arr.append(sub_cmd[1])
+            alias_hash.set(sub_cmd[1],' '.join(sub_cmd[2:]))
+        except:
+            return "Inappropriate Arguments"
+        else:
+            return "Alias set"
+       
 def main():
     hash_set = [["hello",hello],["cd",cd],["mcd",mcd],["alias",alias]]
     for hash  in hash_set:
